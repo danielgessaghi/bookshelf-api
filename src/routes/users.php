@@ -87,42 +87,58 @@ $app->post('/api/register',function(Request $request, Response $response){
     $user = $request->getParam('USERNAME');
     $name = $request->getParam('NAME');
     $surname = $request->getParam('SURNAME');
-    $email = $request->getParam('EMAIL');
+    $usermail = $request->getParam('EMAIL');
     $phone = $request->getParam('PHONE');
     $cap = $request->getParam('CAP');
     $city = $request->getParam('CITY');
     $country = $request->getParam('COUNTRY');
     $street = $request->getParam('STREET');
 
-    $passswordHash = hash ("sha256" , $request->getParam('PASSWORD'));
-
-    $query = "insert INTO users (username,name,surname,email,password,phone,cap,city,id_group,country,street) VALUES ('".$user."','".$name."','".$surname."','".$email."','".$passswordHash."','".$phone."','".$cap."','".$city."',1,'".$country."','".$street."')";
-
-    try
+    $email = new email();
+    $valid = $email->isValid($usermail);
+    //var_dump($valid);
+    if ($valid) 
     {
-        $db = new db();
-        //connect 
-        $db = $db->connect();
-        $stmt = oci_parse($db, $query);
-        //check errors
-        if (!oci_execute($stmt)) 
+        $passswordHash = hash ("sha256" , $request->getParam('PASSWORD'));
+        $query = "insert INTO users (username,name,surname,email,password,phone,cap,city,id_group,country,street) VALUES ('".$user."','".$name."','".$surname."','".$usermail."','".$passswordHash."','".$phone."','".$cap."','".$city."',1,'".$country."','".$street."')";
+        try
         {
-            $response->getBody()->write("one or more rows are not correct");
-            //$e = oci_error($stmt);
-            //trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
+            $db = new db();
+            //connect 
+            $db = $db->connect();
+            $stmt = oci_parse($db, $query);
+            //check errors
+            if (!oci_execute($stmt)) 
+            {
+                $response->getBody()->write("one or more rows are not correct");
+                //$e = oci_error($stmt);
+                //trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
+            }
+            else {
+                //responce data
+                $response->getBody()->write("true");
+            }
+            //close connection
+            $customers = oci_free_statement($stmt);
+            oci_close($db);
+            return $response;
         }
-        else {
-            //responce data
-            $response->getBody()->write("true");
+        catch(PDOException $e)
+        {
+            echo '{"error":{text: '.$e->getMessage().'}';
         }
-        //close connection
-        $customers = oci_free_statement($stmt);
-        oci_close($db);
-    }
-    catch(PDOException $e)
+    } 
+    else 
     {
-        echo '{"error":{text: '.$e->getMessage().'}';
+        $response->getBody()->write("email not correct");
     }
+    
+
+
+    
+
+   
+    
 
 
 });

@@ -4,6 +4,7 @@ use \Psr\Http\Message\ResponseInterface as Response;
 
 require '../vendor/autoload.php';
 require '../src/config/db.php';
+require '../src/config/email_validation.php';
 
 $app = new \Slim\App;
 $app->get('/hello/{name}', function (Request $request, Response $response) {

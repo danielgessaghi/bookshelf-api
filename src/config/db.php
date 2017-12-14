@@ -2,10 +2,7 @@
 
 class db 
 {
-
     //Paramiters
-
-    
     private $dbuser = 'its_group1';
     private $dbpass = 'its';
 
