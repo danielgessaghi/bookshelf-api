@@ -8,5 +8,5 @@ require '../src/config/email_validation.php';
 require '../src/routes/users.php';
 require '../src/routes/cart.php';
 require '../src/routes/books.php';
-
+require '../src/routes/search.php';
 $app->run();
