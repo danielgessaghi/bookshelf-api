@@ -6,12 +6,8 @@ header("Access-Control-Allow-Origin: *");
 
 $app = new \Slim\App;
 
-
-
-
-
 // Get all users 
-$app->get('/api/users', function (Request $request, Response $response){
+$app->get('/api/users/list', function (Request $request, Response $response){
     $sql = "SELECT * FROM users";
     try
     {
@@ -81,7 +77,7 @@ $app->post('/api/login',function (Request $request, Response $response){
     }
 
 });
-
+//bookshelf-api/public/start.php/api/cart/add/{id}
 $app->post('/api/register',function(Request $request, Response $response){
 
     $user = $request->getParam('USERNAME');
@@ -132,13 +128,5 @@ $app->post('/api/register',function(Request $request, Response $response){
     {
         $response->getBody()->write("email not correct");
     }
-    
-
-
-    
-
-   
-    
-
 
 });
