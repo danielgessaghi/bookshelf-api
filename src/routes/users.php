@@ -37,7 +37,6 @@ $app->get('/api/users/list', function (Request $request, Response $response){
 });
 
 
-
 // login utente
 $app->post('/api/login',function (Request $request, Response $response){
 
@@ -75,11 +74,10 @@ $app->post('/api/login',function (Request $request, Response $response){
     {
         echo '{"error":{text: '.$e->getMessage().'}';
     }
-
 });
-//bookshelf-api/public/start.php/api/cart/add/{id}
-$app->post('/api/register',function(Request $request, Response $response){
 
+//
+$app->post('/api/register',function(Request $request, Response $response){
     $user = $request->getParam('USERNAME');
     $name = $request->getParam('NAME');
     $surname = $request->getParam('SURNAME');
@@ -89,7 +87,6 @@ $app->post('/api/register',function(Request $request, Response $response){
     $city = $request->getParam('CITY');
     $country = $request->getParam('COUNTRY');
     $street = $request->getParam('STREET');
-
     $email = new email();
     $valid = $email->isValid($usermail);
     //var_dump($valid);
@@ -128,5 +125,4 @@ $app->post('/api/register',function(Request $request, Response $response){
     {
         $response->getBody()->write("email not correct");
     }
-
 });
