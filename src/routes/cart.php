@@ -4,14 +4,14 @@ use \Psr\Http\Message\ResponseInterface as Response;
 
 header("Access-Control-Allow-Origin: *");
 
-$cart = new \Slim\App;
-
+$app = new \Slim\App;
 // get all item in cart
-
-$cart->get('/api/{user_id}/cart/list', function (Request $request, Response $response){
-    $sql = "SELECT * FROM orders WHERE ID_USER = '".$request->getParam('user_id')."'";
+$app->get('/api/cart/list', function (Request $request, Response $response){
+    $sql = "SELECT * FROM orders WHERE ID_USER = 'Jek'";
+    var_dump($sql);
     try
     {
+        //
         $db = new db();
         //connect 
         $db = $db->connect();
@@ -39,14 +39,14 @@ $cart->get('/api/{user_id}/cart/list', function (Request $request, Response $res
 
 
 // post new item
-$cart->post('/api/cart/add/{id}', function (Request $request, Response $response){
+$app->post('/api/cart/add/{id}', function (Request $request, Response $response){
         
     $user = $request->getParam('USERNAME');
-    $item = $request->getParam('ID_ITEM');
+    $item = $request->getParam('id');
     $quantity = $request->getParam('QUANTITY');
-    $delivery = 'ordered';
+    
 
-    $query = "insert INTO orders(ID_USER, ID_ITEM, QUANTITY, DELIVERY_STATUS) VALUES ('".$user."', '".$item."', '".$quantity."', '".$delivery."')";
+    $query = "insert INTO orders(ID_USER, ID_ITEM, QUANTITY, DELIVERY_STATUS) VALUES ('".$user."', '".$item."', '".$quantity."', 'ordered')";
                 try
                 {
                     $db = new db();
@@ -56,7 +56,7 @@ $cart->post('/api/cart/add/{id}', function (Request $request, Response $response
                     //check errors
                     if (!oci_execute($stmt)) 
                     {
-                        $response->getBody()->write(" not correct");
+                        $response->getBody()->write("not correct");
                         //$e = oci_error($stmt);
                         //trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
                     }
@@ -73,12 +73,6 @@ $cart->post('/api/cart/add/{id}', function (Request $request, Response $response
                 {
                     echo '{"error":{text: '.$e->getMessage().'}';
                 }
-            } 
-            else 
-            {
-                $response->getBody()->write("id not correct");
-            }   
-        });
 });
 
 
