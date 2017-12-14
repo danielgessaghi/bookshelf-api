@@ -37,7 +37,7 @@ $app->get('/api/users/list', function (Request $request, Response $response){
 });
 
 
-
+/*
 // login utente
 $app->post('/api/login',function (Request $request, Response $response){
 
@@ -77,7 +77,7 @@ $app->post('/api/login',function (Request $request, Response $response){
     }
 
 });
-
+//bookshelf-api/public/start.php/api/cart/add/{id}
 $app->post('/api/register',function(Request $request, Response $response){
 
     $user = $request->getParam('USERNAME');
@@ -128,13 +128,5 @@ $app->post('/api/register',function(Request $request, Response $response){
     {
         $response->getBody()->write("email not correct");
     }
-
-
-
-
-
-
-
-
 
 });

@@ -1,13 +1,15 @@
 <?php
+
 use \Psr\Http\Message\ServerRequestInterface as Request;
 use \Psr\Http\Message\ResponseInterface as Response;
 
 header("Access-Control-Allow-Origin: *");
 
-$app = new \Slim\App;
+$book = new \Slim\App;
 
 
 // Get all books paged in 10 books for page
+<<<<<<< HEAD
 $app->get('/api/books/list/{page}', function (Request $request, Response $response){
   $query = "SELECT * FROM items";
   try
@@ -21,6 +23,9 @@ $app->get('/api/books/list/{page}', function (Request $request, Response $respon
           $e = oci_error($stmt);
           trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
       }
+=======
+$book->get('/api/books/list/{page}', function (Request $request, Response $response){
+>>>>>>> 81744a2fc70eb81b26e47d2ad56a443832b9d13b
 
       while ($row = oci_fetch_array($stmt, OCI_ASSOC+OCI_RETURN_NULLS))
       {
@@ -37,6 +42,7 @@ $app->get('/api/books/list/{page}', function (Request $request, Response $respon
   }
 });
 // get book info
+<<<<<<< HEAD
 $app->get('/api/books/detail/{book_id}', function (Request $request, Response $response){
   $query = "SELECT * FROM items WHERE ISBN = ";
   try
@@ -50,6 +56,9 @@ $app->get('/api/books/detail/{book_id}', function (Request $request, Response $r
           $e = oci_error($stmt);
           trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
       }
+=======
+$book->get('/api/books/detail/{book_id}', function (Request $request, Response $response){
+>>>>>>> 81744a2fc70eb81b26e47d2ad56a443832b9d13b
 
       while ($row = oci_fetch_array($stmt, OCI_ASSOC+OCI_RETURN_NULLS))
       {
@@ -66,10 +75,17 @@ $app->get('/api/books/detail/{book_id}', function (Request $request, Response $r
   }
 });
 // delete a book ADMIN
-$app->post('/api/books/delate/{book_id}', function (Request $request, Response $response){
+$book->post('/api/books/delate/{book_id}', function (Request $request, Response $response){
 
 });
+
 // add a book ADMIN
+<<<<<<< HEAD
 $app->post('/api/books/add', function (Request $request, Response $response){
 
 });
+=======
+$book->post('/api/books/add', function (Request $request, Response $response){
+  
+});
+>>>>>>> 81744a2fc70eb81b26e47d2ad56a443832b9d13b
