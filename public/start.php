@@ -15,5 +15,6 @@ $app->get('/hello/{name}', function (Request $request, Response $response) {
 });
 
 require '../src/routes/users.php';
+require '../src/routes/cart.php';
 
 $app->run();
