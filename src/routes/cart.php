@@ -76,8 +76,43 @@ $app->post('/api/cart/add/{id}', function (Request $request, Response $response)
 });
 
 
-/*
+
 //post delete item
 $cart->post('/api/cart/delete/{id}', function (Request $request, Response $response){
+    $user = $request->getParam('USERNAME');
+    $item = $request->getParam('id');
+    $quantity = $request->getParam('QUANTITY');
+    
+
+    $query = "delete FROM orders(ID_USER, ID_ITEM, QUANTITY, DELIVERY_STATUS) VALUES ('".$user."', '".$item."', '".$quantity."', 'ordered')";
+                try
+                {
+                    $db = new db();
+                    //connect 
+                    $db = $db->connect();
+                    $stmt = oci_parse($db, $query);
+                    //check errors
+                    if (!oci_execute($stmt)) 
+                    {
+                        $response->getBody()->write("not correct");
+                        //$e = oci_error($stmt);
+                        //trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
+                    }
+                    else {
+                        //responce data
+                        $response->getBody()->write("true");
+                    }
+                    //close connection
+                    $customers = oci_free_statement($stmt);
+                    oci_close($db);
+                    return $response;
+                }
+                catch(PDOException $e)
+                {
+                    echo '{"error":{text: '.$e->getMessage().'}';
+                }
+
+
+
 });
-*/
+
