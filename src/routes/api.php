@@ -21,10 +21,8 @@ $app->get('/api/users/list', function (Request $request, Response $response){
             $e = oci_error($stmt);
             trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
         }
-
         while ($row = oci_fetch_array($stmt, OCI_ASSOC+OCI_RETURN_NULLS))
         {
-            //var_dump($row);
             $response->getBody()->write( json_encode($row));
         }
         $customers = oci_free_statement($stmt);
@@ -36,7 +34,6 @@ $app->get('/api/users/list', function (Request $request, Response $response){
         echo '{"error":{text: '.$e->getMessage().'}';
     }
 });
-
 // login user
 $app->post('/api/login',function (Request $request, Response $response){
 
@@ -133,8 +130,7 @@ $app->get('/api/books/list/{page}', function (Request $request, Response $respon
   $results_per_page = 10;
   $page = $request->getAttribute('page');
   $start_from = ($page-1) * $results_per_page;
-  $sql = "SELECT * FROM items ORDER BY ISBN OFFSET "."$start_from"." ROWS FETCH NEXT 10 ROWS ONLY;";
-  $result = $conn->query($sql);
+  $sql = "SELECT * FROM items ORDER BY ISBN OFFSET "."$start_from"." ROWS FETCH NEXT 10 ROWS ONLY";
 
   try
   {
@@ -146,7 +142,7 @@ $app->get('/api/books/list/{page}', function (Request $request, Response $respon
           trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
       }
 
-      while ($row = $result->oci_fetch_array($stmt, OCI_ASSOC+OCI_RETURN_NULLS)) {
+      while ($row = oci_fetch_array($stmt, OCI_ASSOC+OCI_RETURN_NULLS)) {
         $response->getBody()->write( json_encode($row));
       }
 
@@ -164,8 +160,8 @@ $app->get('/api/books/list/{page}', function (Request $request, Response $respon
 
 // get book info
 $app->get('/api/books/detail/{book_id}', function (Request $request, Response $response){
-  $isbn = $result->getAttribute('book_id');
-  $query = "SELECT * FROM items WHERE ISBN = "."$isbn";
+  $isbn = $request->getAttribute('book_id');
+  $query = "SELECT * FROM items WHERE ISBN = '".$isbn."'";
   try
   {
       $db = new db();
@@ -306,80 +302,103 @@ $app->get('/api/cart/list', function (Request $request, Response $response){
 
 // post new item
 $app->post('/api/cart/add/{id}', function (Request $request, Response $response){
-
     $user = $request->getParam('USERNAME');
-    $item = $request->getParam('id');
+    $item = $request->getAttribute('id');
     $quantity = $request->getParam('QUANTITY');
-
-
     $query = "insert INTO orders(ID_USER, ID_ITEM, QUANTITY, DELIVERY_STATUS) VALUES ('".$user."', '".$item."', '".$quantity."', 'ordered')";
-                try
-                {
-                    $db = new db();
-                    //connect
-                    $db = $db->connect();
-                    $stmt = oci_parse($db, $query);
-                    //check errors
-                    if (!oci_execute($stmt))
-                    {
-                        $response->getBody()->write("not correct");
-                    }
-                    else {
-                        //responce data
-                        $response->getBody()->write("true");
-                    }
-                    //close connection
-                    $customers = oci_free_statement($stmt);
-                    oci_close($db);
-                    return $response;
-                }
-                catch(PDOException $e)
-                {
-                    echo '{"error":{text: '.$e->getMessage().'}';
-                }
+    try
+    {
+        $db = new db();
+        //connect
+        $db = $db->connect();
+        $stmt = oci_parse($db, $query);
+        //check errors
+        if (!oci_execute($stmt))
+        {
+            $response->getBody()->write("not correct");
+        }
+        else {
+            //responce data
+            $response->getBody()->write("true");
+        }
+        //close connection
+        $customers = oci_free_statement($stmt);
+        oci_close($db);
+        return $response;
+    }
+    catch(PDOException $e)
+    {
+        echo '{"error":{text: '.$e->getMessage().'}';
+    }
+});
+//conferm order 
+$app->post('/api/cart/{user_id}/ordered',function(Request $request, Response $response){
+    $userid= $request->getAttribute('user_id');
+    $query = "UPDATE orders SET  delivery_status = '2' WHERE id_user = '".$userid."' and DELIVERY_STATUS = 1";
+    
+    try
+    {
+        //connect
+        $db = new db();
+        $db = $db->connect();
+        $stmt = oci_parse($db, $query);
+        //check errors
+        if (!oci_execute($stmt))
+        {
+            $response->getBody()->write("not correct");
+        }
+        else {
+            //responce data
+            $response->getBody()->write("true");
+        }
+        //close connection
+        $customers = oci_free_statement($stmt);
+        oci_close($db);
+        return $response;
+    }
+    catch(PDOException $e)
+    {
+        echo '{"error":{text: '.$e->getMessage().'}';
+    }
 });
 
 //post delete item
 $app->post('/api/cart/delete/{id}', function (Request $request, Response $response){
-    $user = $request->getParam('USERNAME');
-    $item = $request->getParam('id');
-    $quantity = $request->getParam('QUANTITY');
-    $query = "delete FROM orders(ID_USER, ID_ITEM, QUANTITY, DELIVERY_STATUS) VALUES ('".$user."', '".$item."', '".$quantity."', 'ordered')";
-                try
-                {
-                    $db = new db();
-                    //connect
-                    $db = $db->connect();
-                    $stmt = oci_parse($db, $query);
-                    //check errors
-                    if (!oci_execute($stmt))
-                    {
-                        $response->getBody()->write("not correct");
-                    }
-                    else {
-                        //responce data
-                        $response->getBody()->write("true");
-                    }
-                    //close connection
-                    $customers = oci_free_statement($stmt);
-                    oci_close($db);
-                    return $response;
-                }
-                catch(PDOException $e)
-                {
-                    echo '{"error":{text: '.$e->getMessage().'}';
-                }
+    
+    $order = $request->getAttribute('id');
+    $query = "update orders o set o.DELIVERY_STATUS = 'cancelled' where o.ID_ORDER = '".$order."'";
+    try
+    {
+        $db = new db();
+        //connect
+        $db = $db->connect();
+        $stmt = oci_parse($db, $query);
+        //check errors
+        if (!oci_execute($stmt))
+        {
+            $response->getBody()->write("not correct");
+        }
+        else {
+            //responce data
+            $response->getBody()->write("true");
+        }
+        //close connection
+        $customers = oci_free_statement($stmt);
+        oci_close($db);
+        return $response;
+    }
+    catch(PDOException $e)
+    {
+        echo '{"error":{text: '.$e->getMessage().'}';
+    }
 
 });
 ////////////////////////////////////SEARCH//////////////////////////////////////
 
 $app->post('/api/search',function(Request $request, Response $response){
-    echo "si";
+    
     $q = $request->getParam('QUESTION');
-    $query = "  select *
-                from items i
-                    join categories c on c.id_category = i.id_category
-                where i.isbn = '".$q."' or i.title = '".$q."' or i.author = '".$q."' or i.PUBBLICATION_DATE = '".$q."' or c.genre = '".$q."'";
+    $query = " SELECT * FROM items i join CATEGORIES c on c.ID_CATEGORY = i.ID_CATEGORY WHERE REGEXP_LIKE (i.AUTHOR,'".$q."','i') or REGEXP_LIKE (i.ISBN,'".$q."','i') or REGEXP_LIKE (i.TITLE,'".$q."','i') or REGEXP_LIKE (c.GENRE ,'".$q."','i')";
     try
     {
         $db = new db();
