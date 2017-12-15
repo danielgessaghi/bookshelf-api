@@ -126,7 +126,7 @@ $app->post('/api/register',function(Request $request, Response $response){
 ////////////////////////////////////BOOK//////////////////////////////////////
 
 // Get all books paged in 10 books for page
-$book->get('/api/books/list/{page}', function (Request $request, Response $response){
+$app->get('/api/books/list/{page}', function (Request $request, Response $response){
   $db = new db();
   //connect
   $db = $db->connect();
@@ -163,7 +163,7 @@ $book->get('/api/books/list/{page}', function (Request $request, Response $respo
 
 
 // get book info
-$book->get('/api/books/detail/{book_id}', function (Request $request, Response $response){
+$app->get('/api/books/detail/{book_id}', function (Request $request, Response $response){
   $isbn = $result->getAttribute('book_id');
   $query = "SELECT * FROM items WHERE ISBN = "."$isbn";
   try
@@ -194,7 +194,7 @@ $book->get('/api/books/detail/{book_id}', function (Request $request, Response $
 
 
 // delete a book ADMIN
-$book->post('/api/books/delate/{book_id}', function (Request $request, Response $response){
+$app->post('/api/books/delate/{book_id}', function (Request $request, Response $response){
     $isbn = $result->getAttribute('book_id');
     $strSQL = "DELETE FROM items WHERE isbn = '".$isbn."' ";
     try
@@ -227,7 +227,7 @@ $book->post('/api/books/delate/{book_id}', function (Request $request, Response 
 
 
 // add a book ADMIN
-$book->post('/api/books/add{id_group}', function (Request $request, Response $response){
+$app->post('/api/books/add{id_group}', function (Request $request, Response $response){
 
   //id_group dell'utente loggato
   $id_group_utente = $result->getAttribute('id_group');
