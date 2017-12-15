@@ -104,7 +104,7 @@ $app->post('/api/register',function(Request $request, Response $response){
             {
                 $response->getBody()->write("one or more rows are not correct");
 
-            else {
+            }else {
                 //responce data
                 $response->getBody()->write("true");
             }
@@ -131,7 +131,7 @@ $book->get('/api/books/list/{page}', function (Request $request, Response $respo
   //connect
   $db = $db->connect();
   $results_per_page = 10;
-  $page = request->getAttribute('page');
+  $page = $request->getAttribute('page');
   $start_from = ($page-1) * $results_per_page;
   $sql = "SELECT * FROM items ORDER BY ISBN OFFSET "."$start_from"." ROWS FETCH NEXT 10 ROWS ONLY;";
   $result = $conn->query($sql);
@@ -164,7 +164,7 @@ $book->get('/api/books/list/{page}', function (Request $request, Response $respo
 
 // get book info
 $book->get('/api/books/detail/{book_id}', function (Request $request, Response $response){
-  $isbn = result->getAttribute('book_id');
+  $isbn = $result->getAttribute('book_id');
   $query = "SELECT * FROM items WHERE ISBN = "."$isbn";
   try
   {
@@ -195,8 +195,8 @@ $book->get('/api/books/detail/{book_id}', function (Request $request, Response $
 
 // delete a book ADMIN
 $book->post('/api/books/delate/{book_id}', function (Request $request, Response $response){
-    $isbn = result->getAttribute('book_id');
-    $strSQL = "DELETE FROM items WHERE isbn = '".$isbn"' ";
+    $isbn = $result->getAttribute('book_id');
+    $strSQL = "DELETE FROM items WHERE isbn = '".$isbn."' ";
     try
       {
         $db = new db();
@@ -218,6 +218,11 @@ $book->post('/api/books/delate/{book_id}', function (Request $request, Response 
     }
     oci_close($db);
     }
+    catch(PDOException $e)
+    {
+        echo '{"error":{text: '.$e->getMessage().'}';
+    }
+
 });
 
 
@@ -225,7 +230,7 @@ $book->post('/api/books/delate/{book_id}', function (Request $request, Response 
 $book->post('/api/books/add{id_group}', function (Request $request, Response $response){
 
   //id_group dell'utente loggato
-  $id_group_utente = result->getAttribute('id_group');
+  $id_group_utente = $result->getAttribute('id_group');
   $isbn = $request->getParam('ISBN');
   $title = $request->getParam('TITLE');
   $author = $request->getParam('AUTHOR');
