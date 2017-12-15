@@ -340,7 +340,7 @@ $app->post('/api/cart/add/{id}', function (Request $request, Response $response)
 });
 
 //post delete item
-$cart->post('/api/cart/delete/{id}', function (Request $request, Response $response){
+$app->post('/api/cart/delete/{id}', function (Request $request, Response $response){
     $user = $request->getParam('USERNAME');
     $item = $request->getParam('id');
     $quantity = $request->getParam('QUANTITY');
