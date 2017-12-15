@@ -10,71 +10,61 @@ $app = new \Slim\App;
 // Get all users
 $app->get('/api/users/list', function (Request $request, Response $response){
     $sql = "SELECT * FROM users";
-    try
+    $db = new db();
+    $db = $db->connect();
+    $stmt = oci_parse($db, $sql);
+    if (!oci_execute($stmt))
     {
-        $db = new db();
-        //connect
-        $db = $db->connect();
-        $stmt = oci_parse($db, $sql);
-        if (!oci_execute($stmt))
-        {
-            $e = oci_error($stmt);
-            trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
-        }
-        while ($row = oci_fetch_array($stmt, OCI_ASSOC+OCI_RETURN_NULLS))
-        {
-            $response->getBody()->write( json_encode($row));
-        }
-        $customers = oci_free_statement($stmt);
-        oci_close($db);
-        return $response;
+        $e = oci_error($stmt);
+        trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
     }
-    catch(PDOException $e)
+    $ret = [];
+    $idx=0;
+    while ($row = oci_fetch_array($stmt, OCI_ASSOC+OCI_RETURN_NULLS))
     {
-        echo '{"error":{text: '.$e->getMessage().'}';
+        $ret[$idx] = $row;
+        $idx++;
     }
+    $response->getBody()->write(json_encode($ret) );
+    $customers = oci_free_statement( $stmt);
+    oci_close($db);
+    return $response;
 });
 // login user
 $app->post('/api/login',function (Request $request, Response $response){
-
     $passswordHash = hash ("sha256" , $request->getParam('PASSWORD'));
-
     $query = "select * from users WHERE EMAIL = '".$request->getParam('EMAIL')."' and PASSWORD = '".$passswordHash."'";
-
-    try
+    $db = new db();
+    //connect
+    $db = $db->connect();
+    $stmt = oci_parse($db, $query);
+    //check errors
+    if (!oci_execute($stmt))
     {
-        $db = new db();
-        //connect
-        $db = $db->connect();
-        $stmt = oci_parse($db, $query);
-        //check errors
-        if (!oci_execute($stmt))
-        {
-            $e = oci_error($stmt);
-            trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
-        }
-        //responce data
-        $row = null;
-        $row = oci_fetch_array($stmt, OCI_ASSOC+OCI_RETURN_NULLS);
-        if ($row !=null) {
-            $respJSON = json_encode($row);
-            $response->getBody()->write("true");
-        } else {
-            $response->getBody()->write("false");
-        }
-        //close connection
-        $customers = oci_free_statement($stmt);
-        oci_close($db);
-        return $response;
+        $e = oci_error($stmt);
+        trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
     }
-    catch(PDOException $e)
+    //responce data
+    $row = null;
+    $row = oci_fetch_array($stmt, OCI_ASSOC+OCI_RETURN_NULLS);
+    if ($row !=null) 
     {
-        echo '{"error":{text: '.$e->getMessage().'}';
+        $respJSON = json_encode($row);
+        $response->getBody()->write(json_encode(true));
+    } 
+    else 
+    {
+        $response->getBody()->write(json_encode(false));
     }
+    //close connection
+    $customers = oci_free_statement($stmt);
+    oci_close($db);
+    return $response;
 });
 
 // register a new user
 $app->post('/api/register',function(Request $request, Response $response){
+    $email = new email();
     $user = $request->getParam('USERNAME');
     $name = $request->getParam('NAME');
     $surname = $request->getParam('SURNAME');
@@ -83,37 +73,25 @@ $app->post('/api/register',function(Request $request, Response $response){
     $cap = $request->getParam('CAP');
     $city = $request->getParam('CITY');
     $country = $request->getParam('COUNTRY');
-    $street = $request->getParam('STREET');
-    $email = new email();
-    $valid = $email->isValid($usermail);
-    if ($valid)
+    $street = $request->getParam('STREET');   
+    if ($email->isValid($usermail))
     {
         $passswordHash = hash ("sha256" , $request->getParam('PASSWORD'));
         $query = "insert INTO users (username,name,surname,email,password,phone,cap,city,id_group,country,street) VALUES ('".$user."','".$name."','".$surname."','".$usermail."','".$passswordHash."','".$phone."','".$cap."','".$city."',1,'".$country."','".$street."')";
-        try
+        $db = new db();
+        $db = $db->connect();
+        $stmt = oci_parse($db, $query);
+        if (!oci_execute($stmt))
         {
-            $db = new db();
-            //connect
-            $db = $db->connect();
-            $stmt = oci_parse($db, $query);
-            //check errors
-            if (!oci_execute($stmt))
-            {
-                $response->getBody()->write("one or more rows are not correct");
-
-            }else {
-                //responce data
-                $response->getBody()->write("true");
-            }
-            //close connection
-            $customers = oci_free_statement($stmt);
-            oci_close($db);
-            return $response;
+            $response->getBody()->write(json_encode(false));
         }
-        catch(PDOException $e)
+        else 
         {
-            echo '{"error":{text: '.$e->getMessage().'}';
+            $response->getBody()->write(json_encode(true));
         }
+        $customers = oci_free_statement($stmt);
+        oci_close($db);
+        return $response;
     }
     else
     {
@@ -121,40 +99,29 @@ $app->post('/api/register',function(Request $request, Response $response){
     }
 });
 ////////////////////////////////////BOOK//////////////////////////////////////
-
 // Get all books paged in 10 books for page
 $app->get('/api/books/list/{page}', function (Request $request, Response $response){
-  $db = new db();
-  //connect
-  $db = $db->connect();
-  $results_per_page = 10;
-  $page = $request->getAttribute('page');
-  $start_from = ($page-1) * $results_per_page;
-  $sql = "SELECT * FROM items ORDER BY ISBN OFFSET "."$start_from"." ROWS FETCH NEXT 10 ROWS ONLY";
-
-  try
-  {
-
-      $stmt = oci_parse($db, $sql);
-      if (!oci_execute($stmt))
-      {
-          $e = oci_error($stmt);
-          trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
-      }
-
-      while ($row = oci_fetch_array($stmt, OCI_ASSOC+OCI_RETURN_NULLS)) {
-        $response->getBody()->write( json_encode($row));
-      }
-
-      $customers = oci_free_statement($stmt);
-      oci_close($db);
-      return $response;
-  }
-
-  catch(PDOException $e)
-  {
-      echo '{"error":{text: '.$e->getMessage().'}';
-  }
+    $db = new db();
+    $db = $db->connect();
+    $results_per_page = 10;
+    $page = $request->getAttribute('page');
+    $start_from = ($page-1) * $results_per_page;
+    $sql = "SELECT * FROM items ORDER BY ISBN OFFSET "."$start_from"." ROWS FETCH NEXT 10 ROWS ONLY";
+    $stmt = oci_parse($db, $sql);
+    if (!oci_execute($stmt))
+    {
+        $e = oci_error($stmt);
+        trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
+    }
+    $ret = [];$i=0;
+    while ($row = oci_fetch_array($stmt, OCI_ASSOC+OCI_RETURN_NULLS)) {
+      $ret[$i] = $row;
+      $i++;
+    }
+    $response->getBody()->write(json_encode($ret));
+    $customers = oci_free_statement($stmt);
+    oci_close($db);
+    return $response;
 });
 //filter of the category
 $app->get('/api/books/filter/{category_id}',function(Request $request, Response $response){
