@@ -156,8 +156,33 @@ $app->get('/api/books/list/{page}', function (Request $request, Response $respon
       echo '{"error":{text: '.$e->getMessage().'}';
   }
 });
-
-
+//filter of the category
+$app->get('/api/books/filter/{category_id}',function(Request $request, Response $response){
+    $category_id = $request->getAttribute('category_id');
+    $db = new db();
+    $db = $db->connect();
+    $sql = "SELECT * FROM items i join categories c on c.id_category = i.ID_CATEGORY where c.GENRE = '".$category_id."'";
+      try
+      {
+          $stmt = oci_parse($db, $sql);
+          if (!oci_execute($stmt))
+          {
+              $e = oci_error($stmt);
+              trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
+          }
+          while ($row = oci_fetch_array($stmt, OCI_ASSOC+OCI_RETURN_NULLS)) 
+          {
+            $response->getBody()->write( json_encode($row));
+          }
+          $customers = oci_free_statement($stmt);
+          oci_close($db);
+          return $response;
+      }
+      catch(PDOException $e)
+      {
+          echo '{"error":{text: '.$e->getMessage().'}';
+      }
+});
 // get book info
 $app->get('/api/books/detail/{book_id}', function (Request $request, Response $response){
   $isbn = $request->getAttribute('book_id');
@@ -299,7 +324,6 @@ $app->get('/api/cart/list', function (Request $request, Response $response){
     }
 });
 
-
 // post new item
 $app->post('/api/cart/add/{id}', function (Request $request, Response $response){
     $user = $request->getParam('USERNAME');
@@ -335,7 +359,6 @@ $app->post('/api/cart/add/{id}', function (Request $request, Response $response)
 $app->post('/api/cart/{user_id}/ordered',function(Request $request, Response $response){
     $userid= $request->getAttribute('user_id');
     $query = "UPDATE orders SET  delivery_status = '2' WHERE id_user = '".$userid."' and DELIVERY_STATUS = 1";
-    
     try
     {
         //connect
