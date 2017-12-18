@@ -48,8 +48,8 @@ $app->post('/api/login', function (Request $request, Response $response) {
     $_SESSION["user"] = $user;
 
     if ($row != null) {
-        $respJSON = json_encode($row);
-        $response->getBody()->write(json_encode(true));
+        $respJSON = array('USERNAME' => $row['USERNAME'] ,'FIRSTNAME' => $row['NAME'],'LASTNAME'=> $row['SURNAME'], 'ID_GROUP' =>$row['ID_GROUP'], 'EMAIL'=>$row['EMAIL'] ); //MORE DATA ADD THERE
+        $response->getBody()->write( json_encode($respJSON));
     } else {
         $response->getBody()->write(json_encode(false));
     }
@@ -63,8 +63,8 @@ $app->post('/api/login', function (Request $request, Response $response) {
 $app->post('/api/register', function (Request $request, Response $response) {
     $email = new email();
     $user = $request->getParam('USERNAME');
-    $name = $request->getParam('NAME');
-    $surname = $request->getParam('SURNAME');
+    $name = $request->getParam('FIRSTNAME');
+    $surname = $request->getParam('LASTNAME');
     $usermail = $request->getParam('EMAIL');
     $phone = $request->getParam('PHONE');
     $cap = $request->getParam('CAP');
