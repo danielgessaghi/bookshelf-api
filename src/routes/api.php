@@ -250,15 +250,26 @@ $app->get('/api/cart/list', function (Request $request, Response $response) {
                     $e = oci_error($stmt);
                     trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
                 }
-
+                $i = 0;
                 while ($row = oci_fetch_array($stmt, OCI_ASSOC + OCI_RETURN_NULLS)) {
-
-                    $ord = $row['ID_ORDER'];
-                    $book = array('ISBN' => $row['ISBN'], 'TITLE' => $row['TITLE'], 'AUTHOR' => $row['AUTHOR'], 'PUBBLICATION_DATE' => $row['PUBBLICATION_DATE'], 'PAGES' => $row['PAGES'], 'PRICE' => $row['PRICE']);
-                    $quant = $row['QUANTITY'];
-                    $response->getBody()->write(json_encode(array('ID_ORDER' => $ord, 'BOOK'=> $book, 'QUANTITY' => $quant)));
+                    if ($i == 0) 
+                    {
+                        $ord = $row['ID_ORDER'];
+                        $book = array('ISBN' => $row['ISBN'], 'TITLE' => $row['TITLE'], 'AUTHOR' => $row['AUTHOR'], 'PUBBLICATION_DATE' => $row['PUBBLICATION_DATE'], 'PAGES' => $row['PAGES'], 'PRICE' => $row['PRICE']);
+                        $quant = $row['QUANTITY'];
+                        $respJSON = array('ID_ORDER' => $ord, 'BOOK'=> $book, 'QUANTITY' => $quant);
+                        $i++;
+                    } 
+                    else 
+                    {
+                        $ord = $row['ID_ORDER'];
+                        $book = array('ISBN' => $row['ISBN'], 'TITLE' => $row['TITLE'], 'AUTHOR' => $row['AUTHOR'], 'PUBBLICATION_DATE' => $row['PUBBLICATION_DATE'], 'PAGES' => $row['PAGES'], 'PRICE' => $row['PRICE']);
+                        $quant = $row['QUANTITY'];
+                        $newRow = array('ID_ORDER' => $ord, 'BOOK'=> $book, 'QUANTITY' => $quant);
+                        array_push($respJSON,$newRow);
+                    }
                 }
-                    //var_dump($jsonResult);
+                $response->getBody()->write(json_encode($respJSON));
                 $customers = oci_free_statement($stmt);
                 oci_close($db);
                 return $response;
