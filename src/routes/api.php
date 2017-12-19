@@ -48,8 +48,8 @@ $app->post('/api/login', function (Request $request, Response $response) {
     $_SESSION["user"] = $user;
 
     if ($row != null) {
-        $respJSON = array('USERNAME' => $row['USERNAME'] ,'FIRSTNAME' => $row['NAME'],'LASTNAME'=> $row['SURNAME'], 'ID_GROUP' =>$row['ID_GROUP'], 'EMAIL'=>$row['EMAIL'] ); //MORE DATA ADD THERE
-        $response->getBody()->write( json_encode($respJSON));
+        $respJSON = array('USERNAME' => $row['USERNAME'], 'FIRSTNAME' => $row['NAME'], 'LASTNAME' => $row['SURNAME'], 'ID_GROUP' => $row['ID_GROUP'], 'EMAIL' => $row['EMAIL']); //MORE DATA ADD THERE
+        $response->getBody()->write(json_encode($respJSON));
     } else {
         $response->getBody()->write(json_encode(false));
     }
@@ -235,28 +235,37 @@ $app->post('/api/books/add', function (Request $request, Response $response) {
 });
 ////////////////////////////////////CART//////////////////////////////////////
 
-$app->get('/api/cart/{id_user}/list', function (Request $request, Response $response){
-    $id_user= $request->getAttribute('id_user');
-    $sql = "SELECT * FROM orders WHERE ID_USER = '".$id_user."' AND DELIVERY_STATUS = '1'";
-    try
-    {
-        $db = new db();
-        //connect
-        $db = $db->connect();
-        $stmt = oci_parse($db, $sql);
-        if (!oci_execute($stmt)) {
-            $e = oci_error($stmt);
-            trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
-        }
+$app->get('/api/cart/list', function (Request $request, Response $response) {
+    if (isset($_SESSION['user'])) {
+        $user = $_SESSION['user'];
+        if ($user['ID_GROUP'] == 1) {
+            $sql = "SELECT orders.ID_ORDER, items.ISBN, items.TITLE, items.AUTHOR, items.PUBBLICATION_DATE, items.PAGES, items.PRICE, orders.QUANTITY FROM orders join items on items.ISBN = orders.ID_ITEM WHERE  orders.DELIVERY_STATUS = '1'";
+            try
+            {
+                $db = new db();
+                //connect
+                $db = $db->connect();
+                $stmt = oci_parse($db, $sql);
+                if (!oci_execute($stmt)) {
+                    $e = oci_error($stmt);
+                    trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
+                }
 
-        while ($row = oci_fetch_array($stmt, OCI_ASSOC + OCI_RETURN_NULLS)) {
-            $response->getBody()->write(json_encode($row));
+                while ($row = oci_fetch_array($stmt, OCI_ASSOC + OCI_RETURN_NULLS)) {
+
+                    $ord = $row['ID_ORDER'];
+                    $book = array('ISBN' => $row['ISBN'], 'TITLE' => $row['TITLE'], 'AUTHOR' => $row['AUTHOR'], 'PUBBLICATION_DATE' => $row['PUBBLICATION_DATE'], 'PAGES' => $row['PAGES'], 'PRICE' => $row['PRICE']);
+                    $quant = $row['QUANTITY'];
+                    $response->getBody()->write(json_encode(array('ID_ORDER' => $ord, 'BOOK'=> $book, 'QUANTITY' => $quant)));
+                }
+                    //var_dump($jsonResult);
+                $customers = oci_free_statement($stmt);
+                oci_close($db);
+                return $response;
+            } catch (PDOException $e) {
+                echo '{"error":{text: ' . $e->getMessage() . '}';
+            }
         }
-        $customers = oci_free_statement($stmt);
-        oci_close($db);
-        return $response;
-    } catch (PDOException $e) {
-        echo '{"error":{text: ' . $e->getMessage() . '}';
     }
 });
 
