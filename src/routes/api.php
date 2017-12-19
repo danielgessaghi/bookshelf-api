@@ -235,15 +235,9 @@ $app->post('/api/books/add', function (Request $request, Response $response) {
 });
 ////////////////////////////////////CART//////////////////////////////////////
 
-<<<<<<< HEAD
 $app->get('/api/cart/{id_user}/list', function (Request $request, Response $response){
     $id_user= $request->getAttribute('id_user');
     $sql = "SELECT * FROM orders WHERE ID_USER = '".$id_user."' AND DELIVERY_STATUS = '1'";
-=======
-$app->get('/api/cart/list', function (Request $request, Response $response) {
-    $sql = "SELECT * FROM orders WHERE ID_USER = 'Jek'";
-    var_dump($sql);
->>>>>>> 1de0064aab144a7148b2418f0a9937dd7e940f50
     try
     {
         $db = new db();
