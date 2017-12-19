@@ -274,9 +274,9 @@ $app->post('/api/books/add{id_group}', function (Request $request, Response $res
 });
 ////////////////////////////////////CART//////////////////////////////////////
 
-$app->get('/api/cart/list', function (Request $request, Response $response){
-    $sql = "SELECT * FROM orders WHERE ID_USER = 'Jek'";
-    var_dump($sql);
+$app->get('/api/cart/{id_user}/list', function (Request $request, Response $response){
+    $id_user= $request->getAttribute('id_user');
+    $sql = "SELECT * FROM orders WHERE ID_USER = '".$id_user."' AND DELIVERY_STATUS = '1'";
     try
     {
         $db = new db();
