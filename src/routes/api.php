@@ -384,3 +384,70 @@ $app->post('/api/search', function (Request $request, Response $response) {
         echo '{"error":{text: ' . $e->getMessage() . '}';
     }
 });
+////////////////////////////////////CATEGORY//////////////////////////////////////
+$app->get('/api/category/list', function (Request $request, Response $response){
+    $query = "select * from categories";
+    try
+    {
+        $db = new db();
+        $db = $db->connect();
+        $stmt = oci_parse($db, $query);
+        if (!oci_execute($stmt)) {
+            $e = oci_error($stmt);
+            trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
+        } 
+        else 
+        {
+            $ret = [];
+            $idx = 0;
+            while ($row = oci_fetch_array($stmt, OCI_ASSOC + OCI_RETURN_NULLS)) 
+            {
+                $ret[$idx] = $row;
+                $idx++;
+            }
+            $response->getBody()->write(json_encode($ret));
+        }
+        //close connection
+        $customers = oci_free_statement($stmt);
+        oci_close($db);
+        return $response;
+    }
+    catch (PDOException $e) 
+    {
+        echo '{"error":{text: ' . $e->getMessage() . '}';
+    }
+});
+
+$app->post('/api/category/sorted/{id}', function (Request $request, Response $response){
+    $category =  $request->getAttribute('id');
+    $query = " select * from items i where i.ID_CATEGORY = '".$category."'";
+    try
+    {
+        $db = new db();
+        $db = $db->connect();
+        $stmt = oci_parse($db, $query);
+        if (!oci_execute($stmt)) {
+            $e = oci_error($stmt);
+            trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
+        } 
+        else 
+        {
+            $ret = [];
+            $idx = 0;
+            while ($row = oci_fetch_array($stmt, OCI_ASSOC + OCI_RETURN_NULLS)) 
+            {
+                $ret[$idx] = $row;
+                $idx++;
+            }
+            $response->getBody()->write(json_encode($ret));
+        }
+        //close connection
+        $customers = oci_free_statement($stmt);
+        oci_close($db);
+        return $response;
+    }
+    catch (PDOException $e) 
+    {
+        echo '{"error":{text: ' . $e->getMessage() . '}';
+    }
+});
