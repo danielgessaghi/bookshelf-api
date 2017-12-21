@@ -329,9 +329,8 @@ $app->post('/api/cart/ordered', function (Request $request, Response $response) 
 
 //post delete item
 $app->post('/api/cart/delete/{id}', function (Request $request, Response $response) {
-
     $order = $request->getAttribute('id');
-    $query = "update orders o set o.DELIVERY_STATUS = 'cancelled' where o.ID_ORDER = '" . $order . "'";
+    $query = "update orders o set o.DELIVERY_STATUS = '5' where o.ID_ORDER = '" . $order . "'";
     try
     {
         $db = new db();
