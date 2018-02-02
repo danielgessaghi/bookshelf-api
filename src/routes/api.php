@@ -238,7 +238,8 @@ $app->post('/api/books/add', function (Request $request, Response $response) {
 $app->get('/api/cart/list', function (Request $request, Response $response) {
     if (isset($_SESSION['user'])) {
         $user = $_SESSION['user'];
-        $sql = "SELECT orders.ID_ORDER, items.ISBN, items.TITLE, items.AUTHOR, items.PUBBLICATION_DATE, items.PAGES, items.PRICE, orders.QUANTITY FROM orders join items on items.ISBN = orders.ID_ITEM WHERE orders.ID_USER = '" . $user['USERNAME'] . "' AND orders.DELIVERY_STATUS = '1'";
+        $sql = "select o.ID_ORDER,o.TOT_PRICE,o.ORDER_DATE, i.ISBN, i.TITLE, i.PRICE, r.QUANTITY from orders o join ORDER_ITEMS r on r.ID_ORDER = o.ID_ORDER join items i on i.ISBN = r.ID_ITEM WHERE o.ID_USER = '".$user['USERNAME']."' AND o.DELIVERY_STATUS = '1'";
+        //var_dump($sql);
         try
         {
             $db = new db();
@@ -253,9 +254,15 @@ $app->get('/api/cart/list', function (Request $request, Response $response) {
             $idx = 0;
             while ($row = oci_fetch_array($stmt, OCI_ASSOC + OCI_RETURN_NULLS)) {
                 $ord = $row['ID_ORDER'];
-                $book = array('ISBN' => $row['ISBN'], 'TITLE' => $row['TITLE'], 'AUTHOR' => $row['AUTHOR'], 'PUBBLICATION_DATE' => $row['PUBBLICATION_DATE'], 'PAGES' => $row['PAGES'], 'PRICE' => $row['PRICE']);
+                $tot = $row['TOT_PRICE'];
+                $da = $row['ORDER_DATE'];
+                $book = array('ISBN' => $row['ISBN'], 'TITLE' => $row['TITLE'], 'PRICE' => $row['PRICE']);
+
+                //var_dump($book);
                 $quant = $row['QUANTITY'];
-                $newRow = array('ID_ORDER' => $ord, 'BOOK' => $book, 'QUANTITY' => $quant);
+                //var_dump($quant);
+                $newRow = array('ID_ORDER' => $ord, 'ORDER_DATE'=>$da, 'BOOK' => $book, 'QUANTITY' => $quant, 'TOT_PRICE' => $tot);
+                var_dump($newRow);
                 $ret[$idx] = $newRow;
                 $idx++;
             }
@@ -274,6 +281,7 @@ $app->post('/api/cart/add/{id}', function (Request $request, Response $response)
     if (isset($_SESSION['user'])) {
         $user = $_SESSION['user'];
         $item = $request->getAttribute('id');
+        
         $query = "insert INTO orders(ID_USER, ID_ITEM,QUANTITY, DELIVERY_STATUS) VALUES ('" . $user['USERNAME'] . "', '" . $item . "','1', '1')";
         try
         {
@@ -301,9 +309,15 @@ $app->post('/api/cart/add/{id}', function (Request $request, Response $response)
 $app->post('/api/cart/ordered', function (Request $request, Response $response) {
     if (isset($_SESSION['user'])) {
         $user = $_SESSION['user'];
-        //var_dump($request->getParam('QUANTITY'));
-        $query = "UPDATE orders SET  delivery_status = '2', quantity = '" . $request->getParam('QUANTITY') . "' WHERE id_user = '" . $user['USERNAME'] . "' and DELIVERY_STATUS = 1";
+        //data for the order 
+        $quantity = $request->getParam('QUANTITY');
+        $tot = $request->getParam('TOT_PRICE');
+        $date = $request->getParam('ORDER_DATE');
+        $order_id = $request->getParam('ID_ORDER');
 
+        $query = "UPDATE ORDERS SET delivery_status = '2', TOT_PRICE = '"+$tot+"', ORDER_DATE = '"+$date+"' WHERE id_user = '"+$user+"' and DELIVERY_STATUS = 1";
+        $query1 = "UPDATE ORDER_ITEMS set QUANTITY = '"+$quantity+"' where ID_ORDER = "+$order_id+" ";
+        //var_dump($query);
         try
         {
             //connect
@@ -316,6 +330,12 @@ $app->post('/api/cart/ordered', function (Request $request, Response $response) 
             } else {
                 //responce data
                 $response->getBody()->write("true");
+                $stmt1 = oci_parse($db, $query1);
+                if (!oci_execute($stmt1)) {
+                    $response->getBody()->write("not correct");
+                }else {
+                    $response->getBody()->write("true");
+                }
             }
             //close connection
             $customers = oci_free_statement($stmt);
