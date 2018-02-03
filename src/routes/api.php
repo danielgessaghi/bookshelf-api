@@ -239,7 +239,6 @@ $app->get('/api/cart/list', function (Request $request, Response $response) {
     if (isset($_SESSION['user'])) {
         $user = $_SESSION['user'];
         $sql = "select o.ID_ORDER,o.TOT_PRICE,o.ORDER_DATE, i.ISBN, i.TITLE, i.PRICE, r.QUANTITY from orders o join ORDER_ITEMS r on r.ID_ORDER = o.ID_ORDER join items i on i.ISBN = r.ID_ITEM WHERE o.ID_USER = '".$user['USERNAME']."' AND o.DELIVERY_STATUS = '1'";
-        //var_dump($sql);
         try
         {
             $db = new db();
@@ -253,19 +252,20 @@ $app->get('/api/cart/list', function (Request $request, Response $response) {
             $ret = [];
             $idx = 0;
             while ($row = oci_fetch_array($stmt, OCI_ASSOC + OCI_RETURN_NULLS)) {
+                
                 $ord = $row['ID_ORDER'];
                 $tot = $row['TOT_PRICE'];
                 $da = $row['ORDER_DATE'];
                 $book = array('ISBN' => $row['ISBN'], 'TITLE' => $row['TITLE'], 'PRICE' => $row['PRICE']);
-
                 //var_dump($book);
                 $quant = $row['QUANTITY'];
                 //var_dump($quant);
                 $newRow = array('ID_ORDER' => $ord, 'ORDER_DATE'=>$da, 'BOOK' => $book, 'QUANTITY' => $quant, 'TOT_PRICE' => $tot);
-                var_dump($newRow);
+                //var_dump($newRow);
                 $ret[$idx] = $newRow;
                 $idx++;
             }
+            //echo json_encode($ret);
             $response->getBody()->write(json_encode($ret));
             $customers = oci_free_statement($stmt);
             oci_close($db);
@@ -273,6 +273,9 @@ $app->get('/api/cart/list', function (Request $request, Response $response) {
         } catch (PDOException $e) {
             echo '{"error":{text: ' . $e->getMessage() . '}';
         }
+    }
+    else {
+        echo "no user";
     }
 });
 
@@ -306,18 +309,28 @@ $app->post('/api/cart/add/{id}', function (Request $request, Response $response)
     }
 });
 //conferm order
-$app->post('/api/cart/ordered', function (Request $request, Response $response) {
-    if (isset($_SESSION['user'])) {
+$app->post('/api/cart/ordered', function (Request $request, Response $response) 
+{
+    if (isset($_SESSION['user']))
+    {
         $user = $_SESSION['user'];
         //data for the order 
+        $data = $request->getParsedBody();
+        echo "\n\n";
+        var_dump($data);
+        var_dump($data[0]["QUANTITY"]);
+        var_dump($data[0]['TOT_PRICE']);
+        var_dump($data[0]['ORDER_DATE']);
+        var_dump($data[0]['ID_ORDER']);
+        echo "\n\n";
         $quantity = $request->getParam('QUANTITY');
         $tot = $request->getParam('TOT_PRICE');
         $date = $request->getParam('ORDER_DATE');
         $order_id = $request->getParam('ID_ORDER');
 
-        $query = "UPDATE ORDERS SET delivery_status = '2', TOT_PRICE = '"+$tot+"', ORDER_DATE = '"+$date+"' WHERE id_user = '"+$user+"' and DELIVERY_STATUS = 1";
-        $query1 = "UPDATE ORDER_ITEMS set QUANTITY = '"+$quantity+"' where ID_ORDER = "+$order_id+" ";
-        //var_dump($query);
+        $query = "UPDATE ORDERS SET delivery_status = '2', TOT_PRICE = '".$tot."', ORDER_DATE = '".$date."' WHERE id_user = '".$user."' and DELIVERY_STATUS = 1";
+        $query1 = "UPDATE ORDER_ITEMS set QUANTITY = '".$quantity."' where ID_ORDER = ".$order_id."";
+        
         try
         {
             //connect
