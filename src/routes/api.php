@@ -314,21 +314,15 @@ $app->post('/api/cart/ordered', function (Request $request, Response $response)
     if (isset($_SESSION['user']))
     {
         $user = $_SESSION['user'];
+        //var_dump($user);
         //data for the order 
         $data = $request->getParsedBody();
-        echo "\n\n";
-        var_dump($data);
-        var_dump($data[0]["QUANTITY"]);
-        var_dump($data[0]['TOT_PRICE']);
-        var_dump($data[0]['ORDER_DATE']);
-        var_dump($data[0]['ID_ORDER']);
-        echo "\n\n";
-        $quantity = $request->getParam('QUANTITY');
-        $tot = $request->getParam('TOT_PRICE');
-        $date = $request->getParam('ORDER_DATE');
-        $order_id = $request->getParam('ID_ORDER');
+        $quantity = $data[0]["QUANTITY"];
+        $tot = $data[0]['TOT_PRICE'];
+        $date = $data[0]['ORDER_DATE'];
+        $order_id = $data[0]['ID_ORDER'];
 
-        $query = "UPDATE ORDERS SET delivery_status = '2', TOT_PRICE = '".$tot."', ORDER_DATE = '".$date."' WHERE id_user = '".$user."' and DELIVERY_STATUS = 1";
+        $query = "UPDATE ORDERS SET delivery_status = '2', TOT_PRICE = '".$tot."', ORDER_DATE = '".$date."' WHERE id_user = '".$user['USERNAME']."' and DELIVERY_STATUS = 1";
         $query1 = "UPDATE ORDER_ITEMS set QUANTITY = '".$quantity."' where ID_ORDER = ".$order_id."";
         
         try
