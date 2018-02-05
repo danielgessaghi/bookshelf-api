@@ -507,3 +507,73 @@ $app->post('/api/category/sorted/{id}', function (Request $request, Response $re
         echo '{"error":{text: ' . $e->getMessage() . '}';
     }
 });
+//////////////////////////////////////TOP 3///////////////////////////////////////////////
+
+//top 3 books
+$app->get('/api/top-{num}/book', function (Request $request, Response $response) {
+    $max = $request->getAttribute('num');
+    $query = 'SELECT * FROM ( select o.ID_ITEM,sum(o.QUANTITY) sum from ORDER_ITEMS o where o.CANCELLED = 0 group by o.ID_ITEM ORDER BY sum DESC  )FETCH NEXT '.$max.' ROWS ONLY';
+    try
+    {
+        $db = new db();
+        $db = $db->connect();
+        $stmt = oci_parse($db, $query);
+        if (!oci_execute($stmt)) 
+        {
+            $e = oci_error($stmt);
+            trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
+        } 
+        else 
+        {
+            $ret = [];
+            $idx = 0;
+            while ($row = oci_fetch_array($stmt, OCI_ASSOC + OCI_RETURN_NULLS)) {
+                $ret[$idx] = $row;
+                $idx++;
+            }
+            $response->getBody()->write(json_encode($ret));
+        }
+        //close connection
+        $customers = oci_free_statement($stmt);
+        oci_close($db);
+        return $response;
+    }
+    catch(PDOException $e) 
+    {
+        echo '{"error":{text: ' . $e->getMessage() . '}';
+    }
+}); 
+//top 3 categories
+$app->get('/api/top-{num}/category', function (Request $request, Response $response) {
+    $max = $request->getAttribute('num');
+    $query = 'select * from (select c.GENRE, count(i.ID_CATEGORY) sum from ORDER_ITEMS r join items i on i.ISBN = r.ID_ITEM join CATEGORIES c on c.ID_CATEGORY = i.ID_CATEGORY  group by c.GENRE ORDER BY sum DESC ) FETCH NEXT '.$max.' ROWS ONLY';
+    try
+    {
+        $db = new db();
+        $db = $db->connect();
+        $stmt = oci_parse($db, $query);
+        if (!oci_execute($stmt)) 
+        {
+            $e = oci_error($stmt);
+            trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
+        } 
+        else 
+        {
+            $ret = [];
+            $idx = 0;
+            while ($row = oci_fetch_array($stmt, OCI_ASSOC + OCI_RETURN_NULLS)) {
+                $ret[$idx] = $row;
+                $idx++;
+            }
+            $response->getBody()->write(json_encode($ret));
+        }
+        //close connection
+        $customers = oci_free_statement($stmt);
+        oci_close($db);
+        return $response;
+    }
+    catch(PDOException $e) 
+    {
+        echo '{"error":{text: ' . $e->getMessage() . '}';
+    }
+});
