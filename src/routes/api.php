@@ -238,7 +238,7 @@ $app->post('/api/books/add', function (Request $request, Response $response) {
 $app->get('/api/cart/list', function (Request $request, Response $response) {
     if (isset($_SESSION['user'])) {
         $user = $_SESSION['user'];
-        $sql = "select o.ID_ORDER,o.TOT_PRICE,o.ORDER_DATE, i.ISBN, i.TITLE, i.PRICE, r.QUANTITY from orders o join ORDER_ITEMS r on r.ID_ORDER = o.ID_ORDER join items i on i.ISBN = r.ID_ITEM WHERE o.ID_USER = '".$user['USERNAME']."' AND o.DELIVERY_STATUS = '1'";
+        $sql = "select o.ID_ORDER,o.TOT_PRICE,o.ORDER_DATE, i.ISBN, i.TITLE, i.PRICE, r.QUANTITY from orders o join ORDER_ITEMS r on r.ID_ORDER = o.ID_ORDER join items i on i.ISBN = r.ID_ITEM WHERE o.ID_USER = '" . $user['USERNAME'] . "' AND o.DELIVERY_STATUS = '1'";
         try
         {
             $db = new db();
@@ -252,7 +252,7 @@ $app->get('/api/cart/list', function (Request $request, Response $response) {
             $ret = [];
             $idx = 0;
             while ($row = oci_fetch_array($stmt, OCI_ASSOC + OCI_RETURN_NULLS)) {
-                
+
                 $ord = $row['ID_ORDER'];
                 $tot = $row['TOT_PRICE'];
                 $da = $row['ORDER_DATE'];
@@ -260,7 +260,7 @@ $app->get('/api/cart/list', function (Request $request, Response $response) {
                 //var_dump($book);
                 $quant = $row['QUANTITY'];
                 //var_dump($quant);
-                $newRow = array('ID_ORDER' => $ord, 'ORDER_DATE'=>$da, 'BOOK' => $book, 'QUANTITY' => $quant, 'TOT_PRICE' => $tot);
+                $newRow = array('ID_ORDER' => $ord, 'ORDER_DATE' => $da, 'BOOK' => $book, 'QUANTITY' => $quant, 'TOT_PRICE' => $tot);
                 //var_dump($newRow);
                 $ret[$idx] = $newRow;
                 $idx++;
@@ -273,8 +273,7 @@ $app->get('/api/cart/list', function (Request $request, Response $response) {
         } catch (PDOException $e) {
             echo '{"error":{text: ' . $e->getMessage() . '}';
         }
-    }
-    else {
+    } else {
         echo "no user";
     }
 });
@@ -284,7 +283,7 @@ $app->post('/api/cart/add/{id}', function (Request $request, Response $response)
     if (isset($_SESSION['user'])) {
         $user = $_SESSION['user'];
         $item = $request->getAttribute('id');
-        
+
         $query = "insert INTO orders(ID_USER, ID_ITEM,QUANTITY, DELIVERY_STATUS) VALUES ('" . $user['USERNAME'] . "', '" . $item . "','1', '1')";
         try
         {
@@ -309,22 +308,30 @@ $app->post('/api/cart/add/{id}', function (Request $request, Response $response)
     }
 });
 //conferm order
-$app->post('/api/cart/ordered', function (Request $request, Response $response) 
-{
-    if (isset($_SESSION['user']))
-    {
+$app->post('/api/cart/ordered', function (Request $request, Response $response) {
+    if (isset($_SESSION['user'])) {
         $user = $_SESSION['user'];
+<<<<<<< HEAD
         //var_dump($user);
         //data for the order 
+=======
+        //data for the order
+>>>>>>> 403a6cc35d0eeed7826256dc340a3fa9eab3cef4
         $data = $request->getParsedBody();
         $quantity = $data[0]["QUANTITY"];
         $tot = $data[0]['TOT_PRICE'];
         $date = $data[0]['ORDER_DATE'];
         $order_id = $data[0]['ID_ORDER'];
 
+<<<<<<< HEAD
         $query = "UPDATE ORDERS SET delivery_status = '2', TOT_PRICE = '".$tot."', ORDER_DATE = '".$date."' WHERE id_user = '".$user['USERNAME']."' and DELIVERY_STATUS = 1";
         $query1 = "UPDATE ORDER_ITEMS set QUANTITY = '".$quantity."' where ID_ORDER = ".$order_id."";
         
+=======
+        $query = "UPDATE ORDERS SET delivery_status = '2', TOT_PRICE = '" . $tot . "', ORDER_DATE = '" . $date . "' WHERE id_user = '" . $user . "' and DELIVERY_STATUS = 1";
+        $query1 = "UPDATE ORDER_ITEMS set QUANTITY = '" . $quantity . "' where ID_ORDER = " . $order_id . "";
+
+>>>>>>> 403a6cc35d0eeed7826256dc340a3fa9eab3cef4
         try
         {
             //connect
@@ -340,7 +347,7 @@ $app->post('/api/cart/ordered', function (Request $request, Response $response)
                 $stmt1 = oci_parse($db, $query1);
                 if (!oci_execute($stmt1)) {
                     $response->getBody()->write("not correct");
-                }else {
+                } else {
                     $response->getBody()->write("true");
                 }
             }
@@ -354,7 +361,7 @@ $app->post('/api/cart/ordered', function (Request $request, Response $response)
     }
 });
 
-//post delete item
+//post delete order
 $app->post('/api/cart/delete/{id}', function (Request $request, Response $response) {
     $order = $request->getAttribute('id');
     $query = "update orders o set o.DELIVERY_STATUS = '5' where o.ID_ORDER = '" . $order . "'";
@@ -379,6 +386,43 @@ $app->post('/api/cart/delete/{id}', function (Request $request, Response $respon
         echo '{"error":{text: ' . $e->getMessage() . '}';
     }
 
+});
+//delete item
+
+$app->post('/api/cart/delete/item/{id}', function (Request $request, Response $response) {
+
+    if (isset($_SESSION['user'])) {
+        $user = $_SESSION['user'];
+
+        $order = $request->getAttribute('id');
+        $query =  "update ORDER_ITEMS o set o.CANCELLED = '1' where o.ID_ORDER_ITEMS = '" . $order . "'";
+
+        try 
+        {
+            $db = new db();
+            //connect
+            $db = $db->connect();
+            $stmt = oci_parse($db, $query);
+            //check errors
+            if (!oci_execute($stmt)) {
+                $response->getBody()->write("not correct");
+            } else {
+                //responce data
+                $response->getBody()->write("true");
+            }
+            //close connection
+            $customers = oci_free_statement($stmt);
+            oci_close($db);
+            return $response;
+        } 
+        catch (PDOException $e) 
+        {
+            echo '{"error":{text: ' . $e->getMessage() . '}';
+        }
+    }
+    else {
+        echo "no user";
+    }
 });
 ////////////////////////////////////SEARCH//////////////////////////////////////
 
@@ -411,7 +455,7 @@ $app->post('/api/search', function (Request $request, Response $response) {
     }
 });
 ////////////////////////////////////CATEGORY//////////////////////////////////////
-$app->get('/api/category/list', function (Request $request, Response $response){
+$app->get('/api/category/list', function (Request $request, Response $response) {
     $query = "select * from categories";
     try
     {
@@ -421,13 +465,10 @@ $app->get('/api/category/list', function (Request $request, Response $response){
         if (!oci_execute($stmt)) {
             $e = oci_error($stmt);
             trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
-        } 
-        else 
-        {
+        } else {
             $ret = [];
             $idx = 0;
-            while ($row = oci_fetch_array($stmt, OCI_ASSOC + OCI_RETURN_NULLS)) 
-            {
+            while ($row = oci_fetch_array($stmt, OCI_ASSOC + OCI_RETURN_NULLS)) {
                 $ret[$idx] = $row;
                 $idx++;
             }
@@ -437,16 +478,14 @@ $app->get('/api/category/list', function (Request $request, Response $response){
         $customers = oci_free_statement($stmt);
         oci_close($db);
         return $response;
-    }
-    catch (PDOException $e) 
-    {
+    } catch (PDOException $e) {
         echo '{"error":{text: ' . $e->getMessage() . '}';
     }
 });
 
-$app->post('/api/category/sorted/{id}', function (Request $request, Response $response){
-    $category =  $request->getAttribute('id');
-    $query = " select * from items i where i.ID_CATEGORY = '".$category."'";
+$app->post('/api/category/sorted/{id}', function (Request $request, Response $response) {
+    $category = $request->getAttribute('id');
+    $query = " select * from items i where i.ID_CATEGORY = '" . $category . "'";
     try
     {
         $db = new db();
@@ -455,13 +494,44 @@ $app->post('/api/category/sorted/{id}', function (Request $request, Response $re
         if (!oci_execute($stmt)) {
             $e = oci_error($stmt);
             trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
+        } else {
+            $ret = [];
+            $idx = 0;
+            while ($row = oci_fetch_array($stmt, OCI_ASSOC + OCI_RETURN_NULLS)) {
+                $ret[$idx] = $row;
+                $idx++;
+            }
+            $response->getBody()->write(json_encode($ret));
+        }
+        //close connection
+        $customers = oci_free_statement($stmt);
+        oci_close($db);
+        return $response;
+    } catch (PDOException $e) {
+        echo '{"error":{text: ' . $e->getMessage() . '}';
+    }
+});
+//////////////////////////////////////TOP 3///////////////////////////////////////////////
+
+//top 3 books
+$app->get('/api/top-{num}/book', function (Request $request, Response $response) {
+    $max = $request->getAttribute('num');
+    $query = 'SELECT * FROM ( select o.ID_ITEM,sum(o.QUANTITY) sum from ORDER_ITEMS o where o.CANCELLED = 0 group by o.ID_ITEM ORDER BY sum DESC  )FETCH NEXT '.$max.' ROWS ONLY';
+    try
+    {
+        $db = new db();
+        $db = $db->connect();
+        $stmt = oci_parse($db, $query);
+        if (!oci_execute($stmt)) 
+        {
+            $e = oci_error($stmt);
+            trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
         } 
         else 
         {
             $ret = [];
             $idx = 0;
-            while ($row = oci_fetch_array($stmt, OCI_ASSOC + OCI_RETURN_NULLS)) 
-            {
+            while ($row = oci_fetch_array($stmt, OCI_ASSOC + OCI_RETURN_NULLS)) {
                 $ret[$idx] = $row;
                 $idx++;
             }
@@ -472,7 +542,41 @@ $app->post('/api/category/sorted/{id}', function (Request $request, Response $re
         oci_close($db);
         return $response;
     }
-    catch (PDOException $e) 
+    catch(PDOException $e) 
+    {
+        echo '{"error":{text: ' . $e->getMessage() . '}';
+    }
+}); 
+//top 3 categories
+$app->get('/api/top-{num}/category', function (Request $request, Response $response) {
+    $max = $request->getAttribute('num');
+    $query = 'select * from (select c.GENRE, count(i.ID_CATEGORY) sum from ORDER_ITEMS r join items i on i.ISBN = r.ID_ITEM join CATEGORIES c on c.ID_CATEGORY = i.ID_CATEGORY  group by c.GENRE ORDER BY sum DESC ) FETCH NEXT '.$max.' ROWS ONLY';
+    try
+    {
+        $db = new db();
+        $db = $db->connect();
+        $stmt = oci_parse($db, $query);
+        if (!oci_execute($stmt)) 
+        {
+            $e = oci_error($stmt);
+            trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
+        } 
+        else 
+        {
+            $ret = [];
+            $idx = 0;
+            while ($row = oci_fetch_array($stmt, OCI_ASSOC + OCI_RETURN_NULLS)) {
+                $ret[$idx] = $row;
+                $idx++;
+            }
+            $response->getBody()->write(json_encode($ret));
+        }
+        //close connection
+        $customers = oci_free_statement($stmt);
+        oci_close($db);
+        return $response;
+    }
+    catch(PDOException $e) 
     {
         echo '{"error":{text: ' . $e->getMessage() . '}';
     }
