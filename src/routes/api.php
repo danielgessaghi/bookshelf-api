@@ -311,27 +311,16 @@ $app->post('/api/cart/add/{id}', function (Request $request, Response $response)
 $app->post('/api/cart/ordered', function (Request $request, Response $response) {
     if (isset($_SESSION['user'])) {
         $user = $_SESSION['user'];
-<<<<<<< HEAD
-        //var_dump($user);
-        //data for the order 
-=======
         //data for the order
->>>>>>> 403a6cc35d0eeed7826256dc340a3fa9eab3cef4
         $data = $request->getParsedBody();
         $quantity = $data[0]["QUANTITY"];
         $tot = $data[0]['TOT_PRICE'];
         $date = $data[0]['ORDER_DATE'];
         $order_id = $data[0]['ID_ORDER'];
 
-<<<<<<< HEAD
         $query = "UPDATE ORDERS SET delivery_status = '2', TOT_PRICE = '".$tot."', ORDER_DATE = '".$date."' WHERE id_user = '".$user['USERNAME']."' and DELIVERY_STATUS = 1";
         $query1 = "UPDATE ORDER_ITEMS set QUANTITY = '".$quantity."' where ID_ORDER = ".$order_id."";
         
-=======
-        $query = "UPDATE ORDERS SET delivery_status = '2', TOT_PRICE = '" . $tot . "', ORDER_DATE = '" . $date . "' WHERE id_user = '" . $user . "' and DELIVERY_STATUS = 1";
-        $query1 = "UPDATE ORDER_ITEMS set QUANTITY = '" . $quantity . "' where ID_ORDER = " . $order_id . "";
-
->>>>>>> 403a6cc35d0eeed7826256dc340a3fa9eab3cef4
         try
         {
             //connect
