@@ -283,8 +283,13 @@ $app->post('/api/cart/add/{id}', function (Request $request, Response $response)
     if (isset($_SESSION['user'])) {
         $user = $_SESSION['user'];
         $item = $request->getAttribute('id');
+        //$price = $request->getAttribute('price');
+        
+        $query = "insert into orders (id_user,delivery_status,order_date) values ('".$user['USERNAME']."','1', to_char(current_date,'DD-MON-YY HH:MI:SS') )";
+        $query1 = "insert into order_items (id_order,quantity,id_item) values ((select id_order from orders where order_date = to_char(current_date,'DD-MON-YY HH:MI:SS') and id_user = '".$user['USERNAME']."'),'1','".$item."')";
 
-        $query = "insert INTO orders(ID_USER, ID_ITEM,QUANTITY, DELIVERY_STATUS) VALUES ('" . $user['USERNAME'] . "', '" . $item . "','1', '1')";
+        var_dump($query1);
+
         try
         {
             $db = new db();
@@ -293,10 +298,16 @@ $app->post('/api/cart/add/{id}', function (Request $request, Response $response)
             $stmt = oci_parse($db, $query);
             //check errors
             if (!oci_execute($stmt)) {
-                $response->getBody()->write("not correct");
+                //$response->getBody()->write("not correct");
             } else {
-                //responce data
-                $response->getBody()->write("true");
+                    //responce data
+                    //$response->getBody()->write("true");
+                $stmt1 = oci_parse($db, $query1);
+                if (!oci_execute($stmt1)) {
+                    $response->getBody()->write("not correct");
+                } else {
+                    $response->getBody()->write("true");
+                }
             }
             //close connection
             $customers = oci_free_statement($stmt);
