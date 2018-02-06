@@ -238,7 +238,7 @@ $app->post('/api/books/add', function (Request $request, Response $response) {
 $app->get('/api/cart/list', function (Request $request, Response $response) {
     if (isset($_SESSION['user'])) {
         $user = $_SESSION['user'];
-        $sql = "select o.ID_ORDER,o.TOT_PRICE,o.ORDER_DATE, i.ISBN, i.TITLE, i.PRICE, r.QUANTITY from orders o join ORDER_ITEMS r on r.ID_ORDER = o.ID_ORDER join items i on i.ISBN = r.ID_ITEM WHERE o.ID_USER = '" . $user['USERNAME'] . "' AND o.DELIVERY_STATUS = '1'";
+        $sql = "select o.ID_ORDER,o.TOT_PRICE,o.ORDER_DATE, i.ISBN, i.TITLE, i.PRICE, r.QUANTITY, R.Id_Order_Items from orders o join ORDER_ITEMS r on r.ID_ORDER = o.ID_ORDER join items i on i.ISBN = r.ID_ITEM WHERE o.ID_USER = '" . $user['USERNAME'] . "' AND o.DELIVERY_STATUS = '1' and r.CANCELLED = 0";
         try
         {
             $db = new db();
@@ -254,13 +254,14 @@ $app->get('/api/cart/list', function (Request $request, Response $response) {
             while ($row = oci_fetch_array($stmt, OCI_ASSOC + OCI_RETURN_NULLS)) {
 
                 $ord = $row['ID_ORDER'];
+                $ord_items = $row['ID_ORDER_ITEMS'];
                 $tot = $row['TOT_PRICE'];
                 $da = $row['ORDER_DATE'];
                 $book = array('ISBN' => $row['ISBN'], 'TITLE' => $row['TITLE'], 'PRICE' => $row['PRICE']);
                 //var_dump($book);
                 $quant = $row['QUANTITY'];
                 //var_dump($quant);
-                $newRow = array('ID_ORDER' => $ord, 'ORDER_DATE' => $da, 'BOOK' => $book, 'QUANTITY' => $quant, 'TOT_PRICE' => $tot);
+                $newRow = array('ID_ORDER' => $ord,'ID_ORDER_ITEMS'=>$ord_items , 'ORDER_DATE' => $da, 'BOOK' => $book, 'QUANTITY' => $quant, 'TOT_PRICE' => $tot);
                 //var_dump($newRow);
                 $ret[$idx] = $newRow;
                 $idx++;
@@ -313,14 +314,21 @@ $app->post('/api/cart/ordered', function (Request $request, Response $response) 
         $user = $_SESSION['user'];
         //data for the order
         $data = $request->getParsedBody();
-        $quantity = $data[0]["QUANTITY"];
-        $tot = $data[0]['TOT_PRICE'];
-        $date = $data[0]['ORDER_DATE'];
-        $order_id = $data[0]['ID_ORDER'];
+        $quantity = $data["QUANTITY"];
+        $tot = $data['TOT_PRICE'];
+        $book_item = $data['BOOK'];
+        $isbn_book = $book_item['ISBN'];
+        $order_id = $data['ID_ORDER'];
 
-        $query = "UPDATE ORDERS SET delivery_status = '2', TOT_PRICE = '".$tot."', ORDER_DATE = '".$date."' WHERE id_user = '".$user['USERNAME']."' and DELIVERY_STATUS = 1";
-        $query1 = "UPDATE ORDER_ITEMS set QUANTITY = '".$quantity."' where ID_ORDER = ".$order_id."";
-        
+        $query = "UPDATE ORDERS SET delivery_status = '2', TOT_PRICE = '".$tot."', ORDER_DATE = CURRENT_DATE WHERE id_user = '".$user['USERNAME']."' and DELIVERY_STATUS = 1";
+        $query1 = "UPDATE ORDER_ITEMS set QUANTITY = '".$quantity."' where ID_ORDER = ".$order_id." and ID_ITEM='".$isbn_book."'";
+        /*echo "\n ------------query1-------------- \n";
+        var_dump($query1);
+        echo "\n ------------book_item-------------- \n";
+        var_dump($book_item);
+        echo "\n ------------data-------------- \n";
+        var_dump($data);
+        echo "\n -------------------------- \n";*/
         try
         {
             //connect
