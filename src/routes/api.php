@@ -641,8 +641,7 @@ $app->get('/api/returns_admin/list', function (Request $request, Response $respo
     if (isset($_SESSION['user'])) {
         $user = $_SESSION['user'];
         
-        $sql = "select o.ID_ORDER,o.ORDER_DATE, i.ISBN, i.TITLE,i.PRICE, r.QUANTITY, R.Id_Order_Items from orders o join ORDER_ITEMS r on r.ID_ORDER = o.ID_ORDER join items i on i.ISBN = r.ID_ITEM join Return e on E.Id_Order_Items = R.Id_Order_Items WHERE o.ID_USER = '".$user['USERNAME']."'  and r.CANCELLED = 0";
-        //$sql = "select i.ISBN, i.TITLE, i.PRICE, r.QUANTITY, R.Id_Order_Items, e.id_returning_status from orders o join ORDER_ITEMS r on r.ID_ORDER = o.ID_ORDER join items i on i.ISBN = r.ID_ITEM join return e on R.Id_Order_Items = e.Id_Order_Items WHERE o.ID_USER = '" . $user['USERNAME'] . "' and r.CANCELLED = 0";
+        $sql = "select o.ID_ORDER,o.ORDER_DATE, i.ISBN, i.TITLE,i.PRICE, r.QUANTITY, R.Id_Order_Items from orders o join ORDER_ITEMS r on r.ID_ORDER = o.ID_ORDER join items i on i.ISBN = r.ID_ITEM join Return e on E.Id_Order_Items = R.Id_Order_Items WHERE r.CANCELLED = 0";
         try
         {
             $db = new db();
