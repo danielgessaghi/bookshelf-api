@@ -637,6 +637,51 @@ $app->get('/api/returns/list', function (Request $request, Response $response) {
     }
 });
 
+$app->get('/api/returns_admin/list', function (Request $request, Response $response) {
+    if (isset($_SESSION['user'])) {
+        $user = $_SESSION['user'];
+        
+        $sql = "select o.ID_ORDER,o.ORDER_DATE, i.ISBN, i.TITLE,i.PRICE, r.QUANTITY, R.Id_Order_Items from orders o join ORDER_ITEMS r on r.ID_ORDER = o.ID_ORDER join items i on i.ISBN = r.ID_ITEM join Return e on E.Id_Order_Items = R.Id_Order_Items WHERE o.ID_USER = '".$user['USERNAME']."'  and r.CANCELLED = 0";
+        //$sql = "select i.ISBN, i.TITLE, i.PRICE, r.QUANTITY, R.Id_Order_Items, e.id_returning_status from orders o join ORDER_ITEMS r on r.ID_ORDER = o.ID_ORDER join items i on i.ISBN = r.ID_ITEM join return e on R.Id_Order_Items = e.Id_Order_Items WHERE o.ID_USER = '" . $user['USERNAME'] . "' and r.CANCELLED = 0";
+        try
+        {
+            $db = new db();
+            //connect
+            $db = $db->connect();
+            $stmt = oci_parse($db, $sql);
+            if (!oci_execute($stmt)) {
+                $e = oci_error($stmt);
+                trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
+            }
+            $ret = [];
+            $idx = 0;
+            while ($row = oci_fetch_array($stmt, OCI_ASSOC + OCI_RETURN_NULLS)) {
+
+                $ord = $row['ID_ORDER'];
+                $ord_items = $row['ID_ORDER_ITEMS'];
+                $da = $row['ORDER_DATE'];
+                //$book = array('ISBN' => $row['ISBN'], 'TITLE' => $row['TITLE'], 'PRICE' => $row['PRICE']);
+                //var_dump($book);
+                $quant = $row['QUANTITY'];
+                //var_dump($quant);
+                $newRow = array('ID_ORDER' => $ord, 'ID_ORDER_ITEMS' => $ord_items, 'ORDER_DATE' => $da, 'ISBN' => $row['ISBN'], 'TITLE' => $row['TITLE'], 'PRICE' => $row['PRICE'], 'QUANTITY' => $quant);
+                //var_dump($newRow);
+                $ret[$idx] = $newRow;
+                $idx++;
+            }
+            //echo json_encode($ret);
+            $response->getBody()->write(json_encode($ret));
+            $customers = oci_free_statement($stmt);
+            oci_close($db);
+            return $response;
+        } catch (PDOException $e) {
+            echo '{"error":{text: ' . $e->getMessage() . '}';
+        }
+    } else {
+        echo "no user";
+    }
+});
+
 
 //delete return item
 $app->post('/api/returns/delete/{id}', function (Request $request, Response $response) {
