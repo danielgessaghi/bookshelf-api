@@ -524,7 +524,7 @@ $app->post('/api/category/sorted/{id}', function (Request $request, Response $re
 //top 3 books
 $app->get('/api/top-{num}/book', function (Request $request, Response $response) {
     $max = $request->getAttribute('num');
-    $query = 'SELECT * FROM ( select o.ID_ITEM,sum(o.QUANTITY) sum from ORDER_ITEMS o where o.CANCELLED = 0 group by o.ID_ITEM ORDER BY sum DESC  )FETCH NEXT '.$max.' ROWS ONLY';
+    $query = 'SELECT * FROM ( select I.Title, sum(o.QUANTITY) sum from ORDER_ITEMS o join items i on I.Isbn = O.Id_Item where o.CANCELLED = 0 group by I.Title ORDER BY sum DESC ) FETCH NEXT 3 ROWS ONLY'
     try
     {
         $db = new db();
