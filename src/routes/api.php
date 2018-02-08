@@ -641,7 +641,7 @@ $app->get('/api/returns_admin/list', function (Request $request, Response $respo
     if (isset($_SESSION['user'])) {
         $user = $_SESSION['user'];
         
-        $sql = "select o.ID_ORDER,o.ORDER_DATE, i.ISBN, i.TITLE,i.PRICE, r.QUANTITY, R.Id_Order_Items from orders o join ORDER_ITEMS r on r.ID_ORDER = o.ID_ORDER join items i on i.ISBN = r.ID_ITEM join Return e on E.Id_Order_Items = R.Id_Order_Items WHERE r.CANCELLED = 0";
+        $sql = "select o.ID_ORDER,o.ORDER_DATE, i.ISBN, i.TITLE,i.PRICE, r.QUANTITY, R.Id_Order_Items, E.Id_Returning_Status from orders o join ORDER_ITEMS r on r.ID_ORDER = o.ID_ORDER join items i on i.ISBN = r.ID_ITEM join Return e on E.Id_Order_Items = R.Id_Order_Items WHERE r.CANCELLED = 0";
         try
         {
             $db = new db();
@@ -658,12 +658,13 @@ $app->get('/api/returns_admin/list', function (Request $request, Response $respo
 
                 $ord = $row['ID_ORDER'];
                 $ord_items = $row['ID_ORDER_ITEMS'];
+                $stat = $row['ID_RETURNING_STATUS'];
                 $da = $row['ORDER_DATE'];
                 //$book = array('ISBN' => $row['ISBN'], 'TITLE' => $row['TITLE'], 'PRICE' => $row['PRICE']);
                 //var_dump($book);
                 $quant = $row['QUANTITY'];
                 //var_dump($quant);
-                $newRow = array('ID_ORDER' => $ord, 'ID_ORDER_ITEMS' => $ord_items, 'ORDER_DATE' => $da, 'ISBN' => $row['ISBN'], 'TITLE' => $row['TITLE'], 'PRICE' => $row['PRICE'], 'QUANTITY' => $quant);
+                $newRow = array('ID_ORDER' => $ord, 'ID_ORDER_ITEMS' => $ord_items,'ID_RETURNING_STATUS'=> $stat, 'ORDER_DATE' => $da, 'ISBN' => $row['ISBN'], 'TITLE' => $row['TITLE'], 'PRICE' => $row['PRICE'], 'QUANTITY' => $quant);
                 //var_dump($newRow);
                 $ret[$idx] = $newRow;
                 $idx++;
