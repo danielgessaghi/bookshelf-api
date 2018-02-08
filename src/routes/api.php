@@ -597,7 +597,7 @@ $app->get('/api/returns/list', function (Request $request, Response $response) {
         $user = $_SESSION['user'];
         
         $sql =" select o.ID_ORDER,R.Id_Order_Items,o.ORDER_DATE, i.ISBN, i.TITLE,i.PRICE, r.QUANTITY from orders o Join Order_Items r on r.Id_Order = o.id_order join Items i on I.Isbn = r.Id_Item where o.id_user = '".$user['USERNAME']."' and r.CANCELLED = 0";
-        $sql1 = "select F.Id_Order_Items, (F.Quantity - A.Quantity) as difference from Return f join Order_Items a on A.Id_Order_Items = F.Id_Order_Items join Orders o on O.Id_Order = A.Id_Order";
+        $sql1 = "select F.Id_Order_Items, (A.Quantity - F.Quantity) as difference from Return f join Order_Items a on A.Id_Order_Items = F.Id_Order_Items join Orders o on O.Id_Order = A.Id_Order";
         try
         {
             $db = new db();
@@ -623,9 +623,6 @@ $app->get('/api/returns/list', function (Request $request, Response $response) {
                 $ret[$idx] = $newRow;
                 $idx++;
             }
-            echo '\n\n';
-            var_dump($ret);
-            echo '\n\n';
 
             $stmt1 = oci_parse($db, $sql1);
             if (!oci_execute($stmt1)) {
@@ -641,19 +638,18 @@ $app->get('/api/returns/list', function (Request $request, Response $response) {
                 $ret1[$idx1] = $newRow1;
                 $idx1++;
             }
-            echo '\n\n';
-            var_dump($ret1);
-            echo '\n\n';
-
-            
+            $ret2 = [];
+            $ic = 0; 
             foreach ($ret as $retItem ) {
-                foreach ($ret1 as $key ) {
+                foreach ($ret1 as $key) {
                     if ($retItem['ID_ORDER_ITEMS'] == $key['ID_ORDER_ITEMS']) {
-                        $ret = ($retItem['QUANTITY'] - $key['DIFFERENCE']);
+                        $ret[$ic]['QUANTITY'] = $key['DIFFERENCE'];
                     }
                 } 
+                $ic++;
             }
-            //echo json_encode($ret);
+            
+          
             $response->getBody()->write(json_encode($ret));
             $customers = oci_free_statement($stmt);
             oci_close($db);
@@ -719,7 +715,7 @@ $app->post('/api/returns/delete/{id}', function (Request $request, Response $res
         $user = $_SESSION['user'];
 
         $order = $request->getAttribute('id');
-        $quantity1 = $request->getParam('QUANTITY');
+        $quantity1 = $request->getParam('retQuantity');
         
 
         $query = "insert into return(id_order_items,quantity,id_returning_status) values ('".$order."','".$quantity1."',1)";
