@@ -596,7 +596,7 @@ $app->get('/api/returns/list', function (Request $request, Response $response) {
     if (isset($_SESSION['user'])) {
         $user = $_SESSION['user'];
         
-        $sql = "select o.ID_ORDER,o.ORDER_DATE, i.ISBN, i.TITLE,i.PRICE, r.QUANTITY, R.Id_Order_Items from orders o join ORDER_ITEMS r on r.ID_ORDER = o.ID_ORDER join items i on i.ISBN = r.ID_ITEM WHERE o.ID_USER = '" . $user['USERNAME'] . "' and r.CANCELLED = 0";
+        $sql = "select o.ID_ORDER,o.ORDER_DATE, i.ISBN, i.TITLE,i.PRICE, r.QUANTITY, R.Id_Order_Items from orders o join ORDER_ITEMS r on r.ID_ORDER = o.ID_ORDER join items i on i.ISBN = r.ID_ITEM WHERE o.ID_USER = '".$user['USERNAME']."' and r.CANCELLED = 0 minus select o.ID_ORDER,o.ORDER_DATE, i.ISBN, i.TITLE,i.PRICE, r.QUANTITY, R.Id_Order_Items from orders o join ORDER_ITEMS r on r.ID_ORDER = o.ID_ORDER join items i on i.ISBN = r.ID_ITEM join Return e on E.Id_Order_Items = R.Id_Order_Items WHERE o.ID_USER = '".$user['USERNAME']."' and r.CANCELLED = 0";
         //$sql = "select i.ISBN, i.TITLE, i.PRICE, r.QUANTITY, R.Id_Order_Items, e.id_returning_status from orders o join ORDER_ITEMS r on r.ID_ORDER = o.ID_ORDER join items i on i.ISBN = r.ID_ITEM join return e on R.Id_Order_Items = e.Id_Order_Items WHERE o.ID_USER = '" . $user['USERNAME'] . "' and r.CANCELLED = 0";
         try
         {
@@ -646,8 +646,7 @@ $app->post('/api/returns/delete/{id}', function (Request $request, Response $res
 
         $order = $request->getAttribute('id');
         $quantity1 = $request->getParam('QUANTITY');
-        $query = "insert into return(id_order_items,quantity,id_returning_status) values ('".$order."','".$quantity1."',1);";
-
+        $query = "insert into return(id_order_items,quantity,id_returning_status) values ('".$order."','".$quantity1."',1)";
         try
         {
             $db = new db();
@@ -672,3 +671,65 @@ $app->post('/api/returns/delete/{id}', function (Request $request, Response $res
         echo "no user";
     }
 });
+
+$app->post('/api/returns_admin/confirmed/{id}', function (Request $request, Response $response) {
+    if (isset($_SESSION['user'])) {
+        $user = $_SESSION['user'];
+        $order = $request->getAttribute('id');
+        $query = "UPDATE Return SET Id_Returning_Status = 2 where Id_Order_Items = ".$order."";
+        try
+        {
+            $db = new db();
+            //connect
+            $db = $db->connect();
+            $stmt = oci_parse($db, $query);
+            //check errors
+            if (!oci_execute($stmt)) {
+                $response->getBody()->write("not correct");
+            } else {
+                //responce data
+                $response->getBody()->write("true");
+            }
+            //close connection
+            $customers = oci_free_statement($stmt);
+            oci_close($db);
+            return $response;
+        } catch (PDOException $e) {
+            echo '{"error":{text: ' . $e->getMessage() . '}';
+        }
+    } else {
+        echo "no user";
+    }
+});
+
+
+$app->post('/api/returns_admin/completed/{id}', function (Request $request, Response $response) {
+    if (isset($_SESSION['user'])) {
+        $user = $_SESSION['user'];
+        $order = $request->getAttribute('id');
+        $query = "UPDATE Return SET Id_Returning_Status = 3 where Id_Order_Items = ".$order."";
+        try
+        {
+            $db = new db();
+            //connect
+            $db = $db->connect();
+            $stmt = oci_parse($db, $query);
+            //check errors
+            if (!oci_execute($stmt)) {
+                $response->getBody()->write("not correct");
+            } else {
+                //responce data
+                $response->getBody()->write("true");
+            }
+            //close connection
+            $customers = oci_free_statement($stmt);
+            oci_close($db);
+            return $response;
+        } catch (PDOException $e) {
+            echo '{"error":{text: ' . $e->getMessage() . '}';
+        }
+    } else {
+        echo "no user";
+    }
+});
+
