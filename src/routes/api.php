@@ -596,8 +596,8 @@ $app->get('/api/returns/list', function (Request $request, Response $response) {
     if (isset($_SESSION['user'])) {
         $user = $_SESSION['user'];
         
-        $sql = "select o.ID_ORDER,o.ORDER_DATE, i.ISBN, i.TITLE,i.PRICE, r.QUANTITY, R.Id_Order_Items from orders o join ORDER_ITEMS r on r.ID_ORDER = o.ID_ORDER join items i on i.ISBN = r.ID_ITEM WHERE o.ID_USER = '".$user['USERNAME']."' and r.CANCELLED = 0 minus select o.ID_ORDER,o.ORDER_DATE, i.ISBN, i.TITLE,i.PRICE, r.QUANTITY, R.Id_Order_Items from orders o join ORDER_ITEMS r on r.ID_ORDER = o.ID_ORDER join items i on i.ISBN = r.ID_ITEM join Return e on E.Id_Order_Items = R.Id_Order_Items WHERE o.ID_USER = '".$user['USERNAME']."' and r.CANCELLED = 0";
-        //$sql = "select i.ISBN, i.TITLE, i.PRICE, r.QUANTITY, R.Id_Order_Items, e.id_returning_status from orders o join ORDER_ITEMS r on r.ID_ORDER = o.ID_ORDER join items i on i.ISBN = r.ID_ITEM join return e on R.Id_Order_Items = e.Id_Order_Items WHERE o.ID_USER = '" . $user['USERNAME'] . "' and r.CANCELLED = 0";
+        $sql =" select o.ID_ORDER,R.Id_Order_Items,o.ORDER_DATE, i.ISBN, i.TITLE,i.PRICE, r.QUANTITY from orders o Join Order_Items r on r.Id_Order = o.id_order join Items i on I.Isbn = r.Id_Item where o.id_user = '".$user['USERNAME']."' and r.CANCELLED = 0";
+        $sql1 = "select F.Id_Order_Items, (F.Quantity - A.Quantity) as difference from Return f join Order_Items a on A.Id_Order_Items = F.Id_Order_Items join Orders o on O.Id_Order = A.Id_Order";
         try
         {
             $db = new db();
@@ -611,7 +611,6 @@ $app->get('/api/returns/list', function (Request $request, Response $response) {
             $ret = [];
             $idx = 0;
             while ($row = oci_fetch_array($stmt, OCI_ASSOC + OCI_RETURN_NULLS)) {
-
                 $ord = $row['ID_ORDER'];
                 $ord_items = $row['ID_ORDER_ITEMS'];
                 $da = $row['ORDER_DATE'];
@@ -623,6 +622,36 @@ $app->get('/api/returns/list', function (Request $request, Response $response) {
                 //var_dump($newRow);
                 $ret[$idx] = $newRow;
                 $idx++;
+            }
+            echo '\n\n';
+            var_dump($ret);
+            echo '\n\n';
+
+            $stmt1 = oci_parse($db, $sql1);
+            if (!oci_execute($stmt1)) {
+                $e = oci_error($stmt1);
+                trigger_error(htmlentities($e['message'], ENT_QUOTES), E_USER_ERROR);
+            }
+            $ret1 = [];
+            $idx1 = 0;
+            while ($row1 = oci_fetch_array($stmt1, OCI_ASSOC + OCI_RETURN_NULLS)) {
+                $ord_items1 = $row1['ID_ORDER_ITEMS'];
+                $quant1 = $row1['DIFFERENCE'];
+                $newRow1 = array('ID_ORDER_ITEMS' => $ord_items1, 'DIFFERENCE' => $quant1);
+                $ret1[$idx1] = $newRow1;
+                $idx1++;
+            }
+            echo '\n\n';
+            var_dump($ret1);
+            echo '\n\n';
+
+            
+            foreach ($ret as $retItem ) {
+                foreach ($ret1 as $key ) {
+                    if ($retItem['ID_ORDER_ITEMS'] == $key['ID_ORDER_ITEMS']) {
+                        $ret = ($retItem['QUANTITY'] - $key['DIFFERENCE']);
+                    }
+                } 
             }
             //echo json_encode($ret);
             $response->getBody()->write(json_encode($ret));
@@ -691,6 +720,8 @@ $app->post('/api/returns/delete/{id}', function (Request $request, Response $res
 
         $order = $request->getAttribute('id');
         $quantity1 = $request->getParam('QUANTITY');
+        
+
         $query = "insert into return(id_order_items,quantity,id_returning_status) values ('".$order."','".$quantity1."',1)";
         try
         {
